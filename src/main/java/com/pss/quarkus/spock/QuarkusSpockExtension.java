@@ -22,11 +22,11 @@ import io.quarkus.deployment.util.IoUtil;
 import io.quarkus.runner.RuntimeRunner;
 import io.quarkus.runner.TransformerTarget;
 import io.quarkus.runtime.LaunchMode;
+import io.quarkus.test.common.NativeImageLauncher;
 import io.quarkus.test.common.RestAssuredURLManager;
 import io.quarkus.test.common.TestInjectionManager;
 import io.quarkus.test.common.TestResourceManager;
 import io.quarkus.test.common.http.TestHTTPResourceManager;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -54,6 +54,9 @@ import static io.quarkus.test.common.PathTestHelper.getTestClassesLocation;
 
 /**
  * Copy Pasta'd
+ *
+ *
+ * todo: Add a switch to leave written classes, sometimes we want to see what happened from the processor output
  */
 public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<QuarkusSpec> {
 
@@ -61,10 +64,23 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
     @Override
     public void visitSpecAnnotation(QuarkusSpec annotation, SpecInfo spec) {
         SpecInitializer extension = new SpecInitializer();
+        TestResourceManager testResourceManager = new TestResourceManager(spec.getReflection());
+        testResourceManager.start();
+        //todo: Detect if the project root directory contains 'target' (For Maven) or 'build' (for Gradle)
+        System.setProperty("quarkus.log.file.path", "target/quarkus.log");
+
         spec.addSetupSpecInterceptor(new IMethodInterceptor() {
             @Override
             public void intercept(IMethodInvocation invocation) throws Throwable {
-                extension.doJavaStart(spec.getReflection());
+                if(annotation.substrate()){
+                    NativeImageLauncher launcher = new NativeImageLauncher(spec.getReflection());
+                    launcher.start();
+
+                    // Launcher implements closeable :)
+                    extension.shutdownTask = launcher;
+                } else {
+                    extension.doJavaStart(spec.getReflection());
+                }
                 invocation.proceed();
             }
         });
@@ -95,43 +111,18 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
                         e.printStackTrace();
                     }
                 });
+                testResourceManager.stop();
             }
         });
     }
 
 
-
-//    @Override
-//    public void beforeAll(ExtensionContext context) throws Exception {
-//        ExtensionContext root = context.getRoot();
-//        ExtensionContext.Store store = root.getStore(ExtensionContext.Namespace.GLOBAL);
-//        ExtensionState state = (ExtensionState) store.get(ExtensionState.class.getName());
-//        System.setProperty("quarkus.log.file.path", "target/quarkus.log");
-//        boolean substrateTest = context.getRequiredTestClass().isAnnotationPresent(SubstrateTest.class);
-//        if (state == null) {
-//            TestResourceManager testResourceManager = new TestResourceManager(context.getRequiredTestClass());
-//            testResourceManager.start();
-//
-//            if (substrateTest) {
-//                NativeImageLauncher launcher = new NativeImageLauncher(context.getRequiredTestClass());
-//                launcher.start();
-//                state = new ExtensionState(testResourceManager, launcher, true);
-//            } else {
-//                state = doJavaStart(context, testResourceManager);
-//            }
-//            store.put(ExtensionState.class.getName(), state);
-//        } else {
-//            if (substrateTest != state.isSubstrate()) {
-//                throw new RuntimeException(
-//                        "Attempted to mix @SubstrateTest and JVM mode tests in the same test run. This is not allowed.");
-//            }
-//        }
-//    }
-
     static class SpecInitializer {
 
-        Closeable shutdownTask;
         final LinkedBlockingDeque<Runnable> shutdownTasks = new LinkedBlockingDeque<>();
+
+        Closeable shutdownTask;
+
         void doJavaStart(Class clazz) {
 
 
