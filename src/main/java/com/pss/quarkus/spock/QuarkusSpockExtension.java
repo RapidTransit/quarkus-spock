@@ -27,6 +27,7 @@ import io.quarkus.test.common.RestAssuredURLManager;
 import io.quarkus.test.common.TestInjectionManager;
 import io.quarkus.test.common.TestResourceManager;
 import io.quarkus.test.common.http.TestHTTPResourceManager;
+import org.jboss.logging.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -35,13 +36,11 @@ import org.spockframework.runtime.extension.IMethodInterceptor;
 import org.spockframework.runtime.extension.IMethodInvocation;
 import org.spockframework.runtime.model.SpecInfo;
 
-import java.io.Closeable;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -61,13 +60,22 @@ import static io.quarkus.test.common.PathTestHelper.getTestClassesLocation;
 public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<QuarkusSpec> {
 
 
+    private static final Logger LOGGER = Logger.getLogger(QuarkusSpockExtension.class.getName());
+
     @Override
     public void visitSpecAnnotation(QuarkusSpec annotation, SpecInfo spec) {
         SpecInitializer extension = new SpecInitializer();
-        TestResourceManager testResourceManager = new TestResourceManager(spec.getReflection());
-        testResourceManager.start();
-        //todo: Detect if the project root directory contains 'target' (For Maven) or 'build' (for Gradle)
-        System.setProperty("quarkus.log.file.path", "target/quarkus.log");
+
+       // TestResourceManager testResourceManager = new TestResourceManager(spec.getReflection());
+
+        LOGGER.debug("Starting Test Resources");
+       // testResourceManager.start();
+
+        String logLocation = Optional.of(annotation.logLocation())
+                .filter(log-> !"".equals(log))
+                .orElse(determineLogLocation());
+
+        System.setProperty("quarkus.log.file.path", logLocation);
 
         spec.addSetupSpecInterceptor(new IMethodInterceptor() {
             @Override
@@ -111,11 +119,25 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
                         e.printStackTrace();
                     }
                 });
-                testResourceManager.stop();
+               // testResourceManager.stop();
             }
         });
     }
 
+
+    private String determineLogLocation(){
+        Path path = Paths.get(System.getProperty("user.dir"));
+        boolean target = path.resolve("target").toFile().exists();
+        boolean build = path.resolve("build").toFile().exists();
+        if(target && build){
+            LOGGER.warn("Both a /build directory and a /target directory were detected, logging to /target");
+            return "target/quarkus.log";
+        } else if(build){
+            return "build/quarkus.log";
+        } else {
+            return "target/quarkus.log";
+        }
+    }
 
     static class SpecInitializer {
 
@@ -141,7 +163,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
                             try (FileOutputStream out = new FileOutputStream(location.toFile())) {
                                 out.write(data);
                             }
-                            shutdownTasks.add(new DeleteRunnable(location));
+                            //shutdownTasks.add(new DeleteRunnable(location));
                         }
 
                         @Override
@@ -255,10 +277,6 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
 
 
-
-
-
-
     static class DeleteRunnable implements Runnable {
         final Path path;
 
@@ -277,4 +295,8 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
             }
         }
     }
+
+
+
+
 }
