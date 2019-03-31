@@ -14,8 +14,15 @@ class QuarkusSpockSpec extends Specification {
 
 
     def "Test Injection"(){
+
         expect:
-        bean1 != null
+        bean1.getContextualInstance() != null
+    }
+
+
+    @Mocks
+    SimpleBean mock(){
+        return Mock(SimpleBean)
     }
 
 }

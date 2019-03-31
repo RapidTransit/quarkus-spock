@@ -16,6 +16,9 @@
 
 package com.pss.quarkus.spock;
 
+import com.pss.quarkus.spock.bytecode.BeanSupplier;
+import com.pss.quarkus.spock.bytecode.InjectionOverride;
+import com.pss.quarkus.spock.exclude.SimpleBean;
 import io.quarkus.test.common.NativeImageLauncher;
 import io.quarkus.test.common.RestAssuredURLManager;
 import io.quarkus.test.common.TestInjectionManager;

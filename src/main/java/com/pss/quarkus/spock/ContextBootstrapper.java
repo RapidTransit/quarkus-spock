@@ -1,5 +1,6 @@
 package com.pss.quarkus.spock;
 
+import com.pss.quarkus.spock.bytecode.ReplacingEnhancer;
 import io.quarkus.deployment.ClassOutput;
 import io.quarkus.deployment.QuarkusClassWriter;
 import io.quarkus.deployment.util.IoUtil;
@@ -9,11 +10,9 @@ import io.quarkus.runtime.LaunchMode;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
-import java.io.Closeable;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +71,15 @@ class ContextBootstrapper {
                         Files.createDirectories(location.getParent());
                         try (FileOutputStream out = new FileOutputStream(location.toFile())) {
                             // todo: Intercept: io/quarkus/arc/setup/Default_ComponentsProvider.class to inject mocks
-                            out.write(data);
+                            if("com/pss/quarkus/spock/exclude/SimpleBean_Bean".equals(className)){
+                                ClassReader classReader = new ClassReader(new ByteArrayInputStream(data));
+                                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                                ReplacingEnhancer enhancer = new ReplacingEnhancer(Opcodes.ASM6, writer);
+                                classReader.accept(enhancer, 0);
+                                out.write(writer.toByteArray());
+                            } else {
+                                out.write(data);
+                            }
                         }
                         // This is commented out because I need to inspect the output bytecode
                        // shutdownTasks.add(new DeleteRunnable(location));
@@ -83,7 +90,10 @@ class ContextBootstrapper {
                         Path location = testClassLocation.resolve(name);
                         Files.createDirectories(location.getParent());
                         try (FileOutputStream out = new FileOutputStream(location.toFile())) {
-                            out.write(data);
+
+                                out.write(data);
+
+
                         }
                         shutdownTasks.add(new DeleteRunnable(location));
                     }
