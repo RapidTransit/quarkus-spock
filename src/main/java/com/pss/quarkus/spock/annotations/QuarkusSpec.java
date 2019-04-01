@@ -1,5 +1,6 @@
-package com.pss.quarkus.spock;
+package com.pss.quarkus.spock.annotations;
 
+import com.pss.quarkus.spock.QuarkusSpockExtension;
 import org.spockframework.runtime.extension.ExtensionAnnotation;
 
 import java.lang.annotation.ElementType;

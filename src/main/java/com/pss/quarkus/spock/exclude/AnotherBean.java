@@ -1,9 +1,6 @@
 package com.pss.quarkus.spock.exclude;
 
-import javax.enterprise.context.ApplicationScoped;
+public interface AnotherBean {
 
-@ApplicationScoped
-public class AnotherBean {
-
-
+    void doNothing();
 }

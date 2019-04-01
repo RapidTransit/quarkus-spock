@@ -1,5 +1,6 @@
 package com.pss.quarkus.spock;
 
+import com.pss.quarkus.spock.bytecode.InjectionOverride;
 import com.pss.quarkus.spock.bytecode.ReplacingEnhancer;
 import io.quarkus.deployment.ClassOutput;
 import io.quarkus.deployment.QuarkusClassWriter;
@@ -63,18 +64,16 @@ class ContextBootstrapper {
                 .setTarget(appClassLocation)
                 .setClassOutput(new ClassOutput() {
 
-
-
                     @Override
                     public void writeClass(boolean applicationClass, String className, byte[] data) throws IOException {
                         Path location = testClassLocation.resolve(className.replace('.', '/') + ".class");
                         Files.createDirectories(location.getParent());
                         try (FileOutputStream out = new FileOutputStream(location.toFile())) {
-                            // todo: Intercept: io/quarkus/arc/setup/Default_ComponentsProvider.class to inject mocks
-                            if("com/pss/quarkus/spock/exclude/SimpleBean_Bean".equals(className)){
+
+                            if(InjectionOverride.containsBeanSupplier(className)){
                                 ClassReader classReader = new ClassReader(new ByteArrayInputStream(data));
                                 ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-                                ReplacingEnhancer enhancer = new ReplacingEnhancer(Opcodes.ASM6, writer);
+                                ReplacingEnhancer enhancer = new ReplacingEnhancer(writer);
                                 classReader.accept(enhancer, 0);
                                 out.write(writer.toByteArray());
                             } else {

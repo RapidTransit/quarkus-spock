@@ -16,9 +16,12 @@
 
 package com.pss.quarkus.spock;
 
+import com.pss.quarkus.spock.annotations.Mocks;
+import com.pss.quarkus.spock.annotations.QuarkusSpec;
+
 import com.pss.quarkus.spock.bytecode.BeanSupplier;
 import com.pss.quarkus.spock.bytecode.InjectionOverride;
-import com.pss.quarkus.spock.exclude.SimpleBean;
+import com.pss.quarkus.spock.repack.ArcTestResourceProvider;
 import io.quarkus.test.common.NativeImageLauncher;
 import io.quarkus.test.common.RestAssuredURLManager;
 import io.quarkus.test.common.TestInjectionManager;
@@ -30,6 +33,7 @@ import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
 import org.spockframework.runtime.model.SpecInfo;
 import spock.lang.Specification;
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -59,6 +63,11 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         final AbstractSpecificationInitializer initializer =
                 annotation.substrate() ? forNative(specClass) : forJvm(specClass);
 
+        for(Method m : specClass.getDeclaredMethods()){
+            if(m.isAnnotationPresent(Mocks.class)){
+                InjectionOverride.putInjection(m.getReturnType(), new BeanSupplier(m.getReturnType().getName(), m));
+            }
+        }
 
         // Log location
         String logLocation = Optional.of(annotation.logLocation())
@@ -70,6 +79,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
 
         spec.addSetupSpecInterceptor(invocation -> {
+
             initializer.initializeResources();
             initializer.start();
             invocation.proceed();
@@ -77,8 +87,9 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
         // Inject Dependencies
         spec.addInitializerInterceptor(invocation -> {
+            BeanSupplier.setSpecification(invocation.getInstance());
             TestHTTPResourceManager.inject(invocation.getInstance());
-            TestInjectionManager.inject(invocation.getInstance());
+            ArcTestResourceProvider.inject(invocation.getInstance());
             RestAssuredURLManager.setURL();
             invocation.proceed();
         });

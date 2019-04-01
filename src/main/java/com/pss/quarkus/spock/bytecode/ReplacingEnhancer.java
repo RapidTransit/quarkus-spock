@@ -13,6 +13,7 @@ public class ReplacingEnhancer extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+        // todo: Make sure it is not a Bridge Method
         if(access == Opcodes.ACC_PUBLIC && "create".equals(name)){
             return new ReplacingMethodEnhancer(super.visitMethod(access, name, descriptor, signature, exceptions));
         }
@@ -23,7 +24,7 @@ public class ReplacingEnhancer extends ClassVisitor {
     static class ReplacingMethodEnhancer extends MethodVisitor {
 
 
-        public ReplacingMethodEnhancer(MethodVisitor methodVisitor) {
+        ReplacingMethodEnhancer(MethodVisitor methodVisitor) {
             super(Opcodes.ASM6, methodVisitor);
         }
 
@@ -112,7 +113,7 @@ public class ReplacingEnhancer extends ClassVisitor {
         }
 
         @Override
-        public void visitMultiANewArrayInsn(String descripto        String type = "com/pss/quarkus/spock/exclude/SimpleBean";r, int numDimensions) {
+        public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
         }
 
         @Override

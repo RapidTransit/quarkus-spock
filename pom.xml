@@ -40,6 +40,11 @@
             <artifactId>quarkus-smallrye-rest-client</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.9.12</version>
+        </dependency>
 
         <dependency>
             <groupId>io.quarkus</groupId>

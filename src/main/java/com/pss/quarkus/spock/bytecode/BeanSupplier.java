@@ -12,9 +12,9 @@ public class BeanSupplier {
     private final String name;
     private final Method method;
 
-    private Object specification;
+    static Object specification;
 
-    protected BeanSupplier(String name, Method method) {
+    public BeanSupplier(String name, Method method) {
         this.name = name;
         this.method = method;
     }
@@ -37,7 +37,7 @@ public class BeanSupplier {
         return specification;
     }
 
-    public void setSpecification(Object specification) {
-        this.specification = specification;
+    public static void setSpecification(Object spec) {
+        specification = spec;
     }
 }

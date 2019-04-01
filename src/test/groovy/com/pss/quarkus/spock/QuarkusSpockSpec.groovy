@@ -1,22 +1,36 @@
 package com.pss.quarkus.spock
 
+import com.pss.quarkus.spock.annotations.Mocks
+import com.pss.quarkus.spock.annotations.QuarkusSpec
 import com.pss.quarkus.spock.exclude.SimpleBean
 import spock.lang.Specification
+import spock.lang.Stepwise
 
 import javax.inject.Inject
-import javax.inject.Named
 
+@Stepwise
 @QuarkusSpec
 class QuarkusSpockSpec extends Specification {
 
     @Inject
-    SimpleBean bean1
+    SimpleBean bean
 
 
     def "Test Injection"(){
+        setup:
+        bean.get() >> "MOCK"
+        when:
+        String result = bean.get()
+        then:
+        result == "MOCK"
+    }
 
-        expect:
-        bean1.getContextualInstance() != null
+
+    def "Make Sure Mock Resets"(){
+        when:
+        String result = bean.get()
+        then:
+        result == null
     }
 
 

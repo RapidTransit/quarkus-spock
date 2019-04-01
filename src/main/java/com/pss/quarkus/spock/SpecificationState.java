@@ -3,16 +3,20 @@ package com.pss.quarkus.spock;
 import io.quarkus.arc.ClientProxy;
 import org.spockframework.runtime.model.SpecInfo;
 
+/**
+ * Not to sure about Spock's threading model yet
+ */
 public class SpecificationState {
 
-    private static final ThreadLocal<SpecificationState> STATE = new ThreadLocal<>();
+    private static SpecInfo info;
+    private static Class clazz;
 
-    private final SpecInfo info;
-    private final Class clazz;
+    public static void setInfo(SpecInfo info) {
+        SpecificationState.info = info;
+    }
 
-    public SpecificationState(SpecInfo info, Class clazz) {
-        this.info = info;
-        this.clazz = clazz;
+    public static void setClazz(Class clazz) {
+        SpecificationState.clazz = clazz;
     }
 
     public SpecInfo getInfo() {
