@@ -6,9 +6,11 @@ import com.pss.quarkus.spock.exclude.AnotherBean
 import com.pss.quarkus.spock.exclude.AnotherBeanImpl
 import com.pss.quarkus.spock.exclude.Qualifying
 import com.pss.quarkus.spock.exclude.SimpleBean
+
 import spock.lang.Specification
 import spock.lang.Stepwise
 
+import static io.restassured.RestAssured.get
 import javax.inject.Inject
 
 @Stepwise
@@ -23,7 +25,7 @@ class QuarkusSpockSpec extends Specification {
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
     AnotherBean anotherBeanWithQualifier
 
-
+    
 
     def "Test Injection"(){
         setup:
@@ -33,6 +35,7 @@ class QuarkusSpockSpec extends Specification {
         then:
         result == "MOCK"
     }
+
 
 
     def "Make Sure Mock Resets"(){
@@ -56,6 +59,14 @@ class QuarkusSpockSpec extends Specification {
         anotherBeanWithQualifier != null
     }
 
+
+    def "Test Rest Service"(){
+        when: "We Call the Back End"
+        def req = get("/endpoint")
+
+        then: "The response body should equal 'OK'"
+        req.body().asString() == "OK"
+    }
 
     @Mocks
     SimpleBean mock(){

@@ -26,6 +26,7 @@ import io.quarkus.test.common.NativeImageLauncher;
 import io.quarkus.test.common.RestAssuredURLManager;
 import io.quarkus.test.common.TestResourceManager;
 import io.quarkus.test.common.http.TestHTTPResourceManager;
+import org.intellij.lang.annotations.PrintFormat;
 import org.jboss.logging.Logger;
 import org.spockframework.mock.MockUtil;
 import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
@@ -51,6 +52,9 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
     private static final Logger LOGGER = Logger.getLogger(QuarkusSpockExtension.class.getName());
 
+    @PrintFormat
+    private static final String MESSAGE = "Assuming Test is running from %s and logging to %s, if this is incorrect " +
+            "or if your compiled files are located in a different directory, please manually assign %s#logLocation()";
 
     @Override
     public void visitSpecAnnotation(QuarkusSpec annotation, SpecInfo spec) {
@@ -62,12 +66,9 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         while (introspected != null && !Specification.class.equals(introspected)){
             for(Method m : introspected.getDeclaredMethods()){
                 if(m.isAnnotationPresent(Mocks.class)){
-
-
                     InjectionMetadata injectionMetadata = InjectionMetadata.fromMethod(m);
                     InjectionOverride.putInjection(injectionMetadata,
                             new BeanSupplier(m.getReturnType().getName(), m));
-                    InjectionOverride.putInjection(m.getReturnType(), new BeanSupplier(m.getReturnType().getName(), m));
                 }
             }
 
@@ -83,7 +84,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         // Log location
         String logLocation = Optional.of(annotation.logLocation())
                 .filter(log-> !"".equals(log))
-                .orElse(determineLogLocation());
+                .orElseGet(()->determineLogLocation());
 
         System.setProperty("quarkus.log.file.path", logLocation);
 
@@ -143,11 +144,13 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         boolean target = path.resolve("target").toFile().exists();
         boolean build = path.resolve("build").toFile().exists();
         if(target && build){
-            LOGGER.warn("Both a /build directory and a /target directory were detected, logging to /target");
+            LOGGER.warn("Both a build/ directory and a target/ directory were detected, logging to target/");
             return "target/quarkus.log";
         } else if(build){
+            LOGGER.infof(MESSAGE, "Gradle", "build/quarkus.log", QuarkusSpec.class.getName());
             return "build/quarkus.log";
         } else {
+            LOGGER.infof(MESSAGE, "Maven", "target/quarkus.log", QuarkusSpec.class.getName());
             return "target/quarkus.log";
         }
     }

@@ -52,7 +52,7 @@ public class ReplacingEnhancer extends ClassVisitor {
         @Override
         public void visitTypeInsn(int opcode, String type) {
             // Replace new with
-            if(Opcodes.NEW == opcode && InjectionOverride.contains(type)){
+            if(Opcodes.NEW == opcode && InjectionOverride.containsJvmClassName(type)){
                 super.visitVarInsn(Opcodes.ALOAD, 0);
                 super.visitVarInsn(Opcodes.ALOAD, 1);
                 super.visitMethodInsn(Opcodes.INVOKESTATIC,

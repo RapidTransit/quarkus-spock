@@ -11,7 +11,6 @@ public @interface Mocks {
 
     /**
      * If you are using an interface to mock, what is the implementation class
-     * todo: Not Implemented
      */
     Class implmentation() default void.class;
 }
