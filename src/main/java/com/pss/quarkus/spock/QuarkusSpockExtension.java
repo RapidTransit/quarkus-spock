@@ -18,13 +18,12 @@ package com.pss.quarkus.spock;
 
 import com.pss.quarkus.spock.annotations.Mocks;
 import com.pss.quarkus.spock.annotations.QuarkusSpec;
-
-import com.pss.quarkus.spock.bytecode.BeanSupplier;
-import com.pss.quarkus.spock.bytecode.InjectionOverride;
+import com.pss.quarkus.spock.inject.BeanSupplier;
+import com.pss.quarkus.spock.inject.InjectionMetadata;
+import com.pss.quarkus.spock.inject.InjectionOverride;
 import com.pss.quarkus.spock.repack.ArcTestResourceProvider;
 import io.quarkus.test.common.NativeImageLauncher;
 import io.quarkus.test.common.RestAssuredURLManager;
-import io.quarkus.test.common.TestInjectionManager;
 import io.quarkus.test.common.TestResourceManager;
 import io.quarkus.test.common.http.TestHTTPResourceManager;
 import org.jboss.logging.Logger;
@@ -59,15 +58,27 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         final MockUtil mockUtil = new MockUtil();
 
         final Class<?> specClass = spec.getReflection();
+        Class introspected = specClass;
+        while (introspected != null && !Specification.class.equals(introspected)){
+            for(Method m : introspected.getDeclaredMethods()){
+                if(m.isAnnotationPresent(Mocks.class)){
 
+
+                    InjectionMetadata injectionMetadata = InjectionMetadata.fromMethod(m);
+                    InjectionOverride.putInjection(injectionMetadata,
+                            new BeanSupplier(m.getReturnType().getName(), m));
+                    InjectionOverride.putInjection(m.getReturnType(), new BeanSupplier(m.getReturnType().getName(), m));
+                }
+            }
+
+            introspected = introspected.getSuperclass();
+        }
         final AbstractSpecificationInitializer initializer =
                 annotation.substrate() ? forNative(specClass) : forJvm(specClass);
 
-        for(Method m : specClass.getDeclaredMethods()){
-            if(m.isAnnotationPresent(Mocks.class)){
-                InjectionOverride.putInjection(m.getReturnType(), new BeanSupplier(m.getReturnType().getName(), m));
-            }
-        }
+
+
+
 
         // Log location
         String logLocation = Optional.of(annotation.logLocation())

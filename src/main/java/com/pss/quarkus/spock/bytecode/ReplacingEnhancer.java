@@ -1,8 +1,8 @@
 package com.pss.quarkus.spock.bytecode;
 
+import com.pss.quarkus.spock.inject.InjectionOverride;
+import com.pss.quarkus.spock.util.ClassUtil;
 import org.objectweb.asm.*;
-
-import static java.lang.reflect.Modifier.PUBLIC;
 
 public class ReplacingEnhancer extends ClassVisitor {
 
@@ -13,7 +13,7 @@ public class ReplacingEnhancer extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        // todo: Make sure it is not a Bridge Method
+        // todo: Make sure it is not a Bridge Method?
         if(access == Opcodes.ACC_PUBLIC && "create".equals(name)){
             return new ReplacingMethodEnhancer(super.visitMethod(access, name, descriptor, signature, exceptions));
         }
@@ -21,8 +21,8 @@ public class ReplacingEnhancer extends ClassVisitor {
     }
 
 
-    static class ReplacingMethodEnhancer extends MethodVisitor {
 
+    static class ReplacingMethodEnhancer extends MethodVisitor {
 
         ReplacingMethodEnhancer(MethodVisitor methodVisitor) {
             super(Opcodes.ASM6, methodVisitor);
@@ -53,17 +53,16 @@ public class ReplacingEnhancer extends ClassVisitor {
         public void visitTypeInsn(int opcode, String type) {
             // Replace new with
             if(Opcodes.NEW == opcode && InjectionOverride.contains(type)){
-                super.mv.visitLdcInsn(type);
-
+                super.visitVarInsn(Opcodes.ALOAD, 0);
+                super.visitVarInsn(Opcodes.ALOAD, 1);
                 super.visitMethodInsn(Opcodes.INVOKESTATIC,
-                        InjectionOverride.class.getName().replace('.', '/'),
+                        ClassUtil.toJvm(InjectionOverride.class),
                         "getInjection",
-                        "(Ljava/lang/String;)Ljava/lang/Object;",
-                        false
-                        );
+                        "(Lio/quarkus/arc/InjectableBean;Ljavax/enterprise/context/spi/CreationalContext;)Ljava/lang/Object;",
+                        false);
                 super.visitTypeInsn(Opcodes.CHECKCAST, type);
                 super.visitInsn(Opcodes.ARETURN);
-                super.visitMaxs(1, 2);
+                super.visitMaxs(2, 2);
             }
         }
 

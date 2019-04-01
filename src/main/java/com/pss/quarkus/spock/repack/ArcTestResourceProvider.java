@@ -16,6 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * I can't/do not know how to exclude {@link io.quarkus.arc.deployment.ArcTestResourceProvider} or guarantee the loading
+ * order of the ServiceLoader
+ */
 public class ArcTestResourceProvider  {
 
     private static MockUtil mockUtil = new MockUtil();

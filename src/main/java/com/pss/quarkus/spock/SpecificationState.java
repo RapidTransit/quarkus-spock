@@ -4,19 +4,17 @@ import io.quarkus.arc.ClientProxy;
 import org.spockframework.runtime.model.SpecInfo;
 
 /**
- * Not to sure about Spock's threading model yet
+ * Not to sure about Spock's threading model yet, this was going to be a place holder for a thread local
  */
 public class SpecificationState {
 
-    private static SpecInfo info;
-    private static Class clazz;
+    private Object specification;
+    private final SpecInfo info;
+    private final Class clazz;
 
-    public static void setInfo(SpecInfo info) {
-        SpecificationState.info = info;
-    }
-
-    public static void setClazz(Class clazz) {
-        SpecificationState.clazz = clazz;
+    public SpecificationState(SpecInfo info, Class clazz) {
+        this.info = info;
+        this.clazz = clazz;
     }
 
     public SpecInfo getInfo() {

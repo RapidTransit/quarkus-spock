@@ -1,4 +1,4 @@
-package com.pss.quarkus.spock.bytecode;
+package com.pss.quarkus.spock.inject;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -6,13 +6,12 @@ import java.lang.reflect.Method;
 
 public class BeanSupplier {
 
-    //todo: Right now we just inject by name
-    // private final Set<Object> metadata = new HashSet<>();
-
     private final String name;
     private final Method method;
 
     static Object specification;
+
+    private Object bean;
 
     public BeanSupplier(String name, Method method) {
         this.name = name;
@@ -25,11 +24,14 @@ public class BeanSupplier {
     }
 
     public Object getBean(){
-        try {
-            return method.invoke(specification);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+        if(bean == null) {
+            try {
+                bean = method.invoke(specification);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
         }
+        return bean;
     }
 
 

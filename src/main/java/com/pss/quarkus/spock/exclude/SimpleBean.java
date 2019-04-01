@@ -7,6 +7,7 @@ import javax.inject.Inject;
 public class SimpleBean {
 
     @Inject
+    @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
     AnotherBean anotherBean;
 
     public String get(){

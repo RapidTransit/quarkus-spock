@@ -1,6 +1,6 @@
 package com.pss.quarkus.spock;
 
-import com.pss.quarkus.spock.bytecode.InjectionOverride;
+import com.pss.quarkus.spock.inject.InjectionOverride;
 import com.pss.quarkus.spock.bytecode.ReplacingEnhancer;
 import io.quarkus.deployment.ClassOutput;
 import io.quarkus.deployment.QuarkusClassWriter;
@@ -11,7 +11,6 @@ import io.quarkus.runtime.LaunchMode;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.net.URL;
@@ -89,10 +88,7 @@ class ContextBootstrapper {
                         Path location = testClassLocation.resolve(name);
                         Files.createDirectories(location.getParent());
                         try (FileOutputStream out = new FileOutputStream(location.toFile())) {
-
-                                out.write(data);
-
-
+                            out.write(data);
                         }
                         shutdownTasks.add(new DeleteRunnable(location));
                     }
