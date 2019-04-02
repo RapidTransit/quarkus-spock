@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * # QuarkusSpec
+ * = Use Quarkus's Dependency Injection for Spock Tests
  *
  * Add this annotation to your Spock Specification to bootstrap a Quarkus embedded application
  */

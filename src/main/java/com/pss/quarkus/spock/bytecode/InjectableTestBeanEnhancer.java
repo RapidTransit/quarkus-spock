@@ -18,7 +18,7 @@ import static com.pss.quarkus.spock.inject.InjectionOverride.INJECTABLE_BEANS;
 
 
 /**
- * # Injectable Test Bean Enhancer
+ * = Injectable Test Bean Enhancer
  *
  * This class is an ASM visitor that accomplishes the following:
  *
@@ -30,8 +30,8 @@ import static com.pss.quarkus.spock.inject.InjectionOverride.INJECTABLE_BEANS;
  * - Remake {@link InjectableBean#create(CreationalContext)} and its bridge method to
  * {@link InjectionOverride#getInjectableBean(InjectableTestBean, CreationalContext)} (Using 'this' as the first
  * parameter and passing `CreationalContext` along with it) which will do one of two things:
- * -- Try to find a Mock bean, if it does return the mock
- * -- If the mock is not found call {@link InjectableTestBean#createBean(CreationalContext)} and return the real result
+ * ** Try to find a Mock bean, if it does return the mock
+ * ** If the mock is not found call {@link InjectableTestBean#createBean(CreationalContext)} and return the real result
  */
 public class InjectableTestBeanEnhancer extends ClassVisitor {
 
