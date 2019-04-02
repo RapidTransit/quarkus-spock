@@ -10,7 +10,8 @@ import java.lang.annotation.Target;
 public @interface Mocks {
 
     /**
-     * If you are using an interface to mock, what is the implementation class
+     * If you are using an interface to mock, what is the implementation class, this is not working, this will take some
+     * more byte code manipulation
      */
     Class implmentation() default void.class;
 }

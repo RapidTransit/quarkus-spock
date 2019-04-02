@@ -18,17 +18,18 @@ package com.pss.quarkus.spock;
 
 import com.pss.quarkus.spock.annotations.Mocks;
 import com.pss.quarkus.spock.annotations.QuarkusSpec;
-import com.pss.quarkus.spock.inject.BeanSupplier;
-import com.pss.quarkus.spock.inject.InjectionMetadata;
+import com.pss.quarkus.spock.inject.MockBeanSupplier;
 import com.pss.quarkus.spock.inject.InjectionOverride;
 import com.pss.quarkus.spock.repack.ArcTestResourceProvider;
+import com.pss.quarkus.spock.repack.bootstrap.ContextBootstrapper;
+import com.pss.quarkus.spock.state.SpecificationState;
+import com.pss.quarkus.spock.util.CommonUtils;
 import io.quarkus.test.common.NativeImageLauncher;
 import io.quarkus.test.common.RestAssuredURLManager;
 import io.quarkus.test.common.TestResourceManager;
 import io.quarkus.test.common.http.TestHTTPResourceManager;
 import org.intellij.lang.annotations.PrintFormat;
 import org.jboss.logging.Logger;
-import org.spockframework.mock.MockUtil;
 import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
 import org.spockframework.runtime.model.SpecInfo;
 import spock.lang.Specification;
@@ -59,16 +60,15 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
     @Override
     public void visitSpecAnnotation(QuarkusSpec annotation, SpecInfo spec) {
 
-        final MockUtil mockUtil = new MockUtil();
+
 
         final Class<?> specClass = spec.getReflection();
         Class introspected = specClass;
         while (introspected != null && !Specification.class.equals(introspected)){
             for(Method m : introspected.getDeclaredMethods()){
                 if(m.isAnnotationPresent(Mocks.class)){
-                    InjectionMetadata injectionMetadata = InjectionMetadata.fromMethod(m);
-                    InjectionOverride.putInjection(injectionMetadata,
-                            new BeanSupplier(m.getReturnType().getName(), m));
+                    MockBeanSupplier supplier = MockBeanSupplier.from(m);
+                    InjectionOverride.putBeanSupplier(supplier);
                 }
             }
 
@@ -84,14 +84,14 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         // Log location
         String logLocation = Optional.of(annotation.logLocation())
                 .filter(log-> !"".equals(log))
-                .orElseGet(()->determineLogLocation());
+                .orElseGet(this::determineLogLocation);
 
         System.setProperty("quarkus.log.file.path", logLocation);
 
 
 
         spec.addSetupSpecInterceptor(invocation -> {
-
+            SpecificationState.setSpecification(invocation.getInstance());
             initializer.initializeResources();
             initializer.start();
             invocation.proceed();
@@ -99,7 +99,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
         // Inject Dependencies
         spec.addInitializerInterceptor(invocation -> {
-            BeanSupplier.setSpecification(invocation.getInstance());
+            SpecificationState.setSpecification(invocation.getInstance());
             TestHTTPResourceManager.inject(invocation.getInstance());
             ArcTestResourceProvider.inject(invocation.getInstance());
             RestAssuredURLManager.setURL();
@@ -107,26 +107,15 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         });
 
         spec.addSetupInterceptor(invocation -> {
-            invocation.getSpec().getAllFields()
-                    .forEach(x-> {
-                        Object o = x.readValue(invocation.getInstance());
-                        if(mockUtil.isMock(o)){
-                            mockUtil.attachMock(o, (Specification) invocation.getInstance());
-                        }
-                    });
+            RestAssuredURLManager.setURL();
+            CommonUtils.attachMocks(invocation);
             invocation.proceed();
         });
 
         // Clear URL
         spec.addCleanupInterceptor(invocation -> {
             RestAssuredURLManager.clearURL();
-            invocation.getSpec().getAllFields()
-                    .forEach(x-> {
-                        Object o = x.readValue(invocation.getInstance());
-                        if(mockUtil.isMock(o)){
-                            mockUtil.detachMock(o);
-                        }
-                    });
+            CommonUtils.detachMocks(invocation);
             invocation.proceed();
         });
 

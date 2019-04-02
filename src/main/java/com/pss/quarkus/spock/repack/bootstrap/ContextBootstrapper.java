@@ -1,7 +1,7 @@
-package com.pss.quarkus.spock;
+package com.pss.quarkus.spock.repack.bootstrap;
 
+import com.pss.quarkus.spock.bytecode.InjectableTestBeanEnhancer;
 import com.pss.quarkus.spock.inject.InjectionOverride;
-import com.pss.quarkus.spock.bytecode.ReplacingEnhancer;
 import io.quarkus.deployment.ClassOutput;
 import io.quarkus.deployment.QuarkusClassWriter;
 import io.quarkus.deployment.util.IoUtil;
@@ -25,7 +25,7 @@ import java.util.function.BiFunction;
 import static io.quarkus.test.common.PathTestHelper.getAppClassLocation;
 import static io.quarkus.test.common.PathTestHelper.getTestClassesLocation;
 
-class ContextBootstrapper {
+public class ContextBootstrapper {
 
     private final RuntimeRunner runner;
 
@@ -36,12 +36,12 @@ class ContextBootstrapper {
         this.shutdownTask = shutdownTask;
     }
 
-    void run() {
+    public void run() {
         runner.run();
     }
 
 
-    void shutdown() {
+    public void shutdown() {
         try {
             shutdownTask.close();
         } catch (IOException e) {
@@ -54,6 +54,8 @@ class ContextBootstrapper {
         final LinkedBlockingDeque<Runnable> shutdownTasks = new LinkedBlockingDeque<>();
 
         final Closeable shutdownTask;
+
+
 
         Path appClassLocation = getAppClassLocation(clazz);
         Path testClassLocation = getTestClassesLocation(clazz);
@@ -72,7 +74,7 @@ class ContextBootstrapper {
                             if(InjectionOverride.containsBeanSupplier(className)){
                                 ClassReader classReader = new ClassReader(new ByteArrayInputStream(data));
                                 ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-                                ReplacingEnhancer enhancer = new ReplacingEnhancer(writer);
+                                InjectableTestBeanEnhancer enhancer = new InjectableTestBeanEnhancer(writer);
                                 classReader.accept(enhancer, 0);
                                 out.write(writer.toByteArray());
                             } else {

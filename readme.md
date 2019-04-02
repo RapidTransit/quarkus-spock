@@ -33,3 +33,13 @@ Add this to your plugins in your Maven build
     </dependencies>
 </plugin>
 ```
+
+You will also need to add Byte Buddy
+
+```xml
+<dependency>
+    <groupId>net.bytebuddy</groupId>
+    <artifactId>byte-buddy</artifactId>
+    <version>1.9.12</version>
+</dependency>
+```

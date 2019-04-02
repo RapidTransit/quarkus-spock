@@ -4,6 +4,7 @@ import com.pss.quarkus.spock.annotations.Mocks
 import com.pss.quarkus.spock.annotations.QuarkusSpec
 import com.pss.quarkus.spock.exclude.AnotherBean
 import com.pss.quarkus.spock.exclude.AnotherBeanImpl
+import com.pss.quarkus.spock.exclude.ProducedBean
 import com.pss.quarkus.spock.exclude.Qualifying
 import com.pss.quarkus.spock.exclude.SimpleBean
 
@@ -25,7 +26,10 @@ class QuarkusSpockSpec extends Specification {
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
     AnotherBean anotherBeanWithQualifier
 
-    
+
+    @Inject
+    @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
+    ProducedBean producedBean
 
     def "Test Injection"(){
         setup:
@@ -79,4 +83,9 @@ class QuarkusSpockSpec extends Specification {
         return Mock(AnotherBeanImpl)
     }
 
+    @Mocks
+    @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
+    ProducedBean getOne(){
+        return Mock(ProducedBean)
+    }
 }

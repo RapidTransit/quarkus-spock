@@ -9,6 +9,13 @@ public class HttpEndpoint {
 
     @Inject SimpleBean simpleBean;
 
+    @Qualifying(Qualifying.Qualify.QUALIFY)
+    @Inject ProducedBean one;
+
+    @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
+    @Inject ProducedBean two;
+
+
     @GET
     public String get(){
         return "OK";

@@ -1,5 +1,6 @@
 package com.pss.quarkus.spock.repack;
 
+import com.pss.quarkus.spock.util.CommonUtils;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ClientProxy;
 import org.spockframework.mock.MockUtil;
@@ -22,7 +23,7 @@ import java.util.Set;
  */
 public class ArcTestResourceProvider  {
 
-    private static MockUtil mockUtil = new MockUtil();
+
 
 
     public static void inject(Object test) {
@@ -48,7 +49,7 @@ public class ArcTestResourceProvider  {
                     }
                     f.setAccessible(true);
                     try {
-                        if(mockUtil.isMock(unwrapped)){
+                        if(CommonUtils.MOCK_UTIL.isMock(unwrapped)){
                             f.set(test, unwrapped);
                         } else {
                             f.set(test, instance);
