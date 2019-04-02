@@ -71,15 +71,12 @@ public class ContextBootstrapper {
                         Files.createDirectories(location.getParent());
                         try (FileOutputStream out = new FileOutputStream(location.toFile())) {
 
-                            if(InjectionOverride.containsBeanSupplier(className)){
-                                ClassReader classReader = new ClassReader(new ByteArrayInputStream(data));
-                                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-                                InjectableTestBeanEnhancer enhancer = new InjectableTestBeanEnhancer(writer);
-                                classReader.accept(enhancer, 0);
-                                out.write(writer.toByteArray());
-                            } else {
-                                out.write(data);
-                            }
+                            ClassReader classReader = new ClassReader(new ByteArrayInputStream(data));
+                            ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                            InjectableTestBeanEnhancer enhancer = new InjectableTestBeanEnhancer(writer);
+                            classReader.accept(enhancer, 0);
+                            out.write(writer.toByteArray());
+
                         }
                         // This is commented out because I need to inspect the output bytecode
                        // shutdownTasks.add(new DeleteRunnable(location));
