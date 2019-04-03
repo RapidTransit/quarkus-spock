@@ -5,7 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.pss</groupId>
     <artifactId>quarkus-spock</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>integration</module>
+        <module>runtime</module>
+    </modules>
 
     <properties>
         <surefire-plugin.version>2.22.0</surefire-plugin.version>
