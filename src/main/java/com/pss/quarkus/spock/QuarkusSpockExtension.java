@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import io.quarkus.arc.Arc;
 import org.intellij.lang.annotations.PrintFormat;
 import org.jboss.logging.Logger;
 import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
@@ -91,6 +92,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
         // Inject Dependencies
         spec.addInitializerInterceptor(invocation -> {
+
             SpecificationState.setSpecification(invocation.getInstance());
             TestHTTPResourceManager.inject(invocation.getInstance());
             ArcTestResourceProvider.inject(invocation.getInstance());
@@ -175,6 +177,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         @Override
         void start() {
             delegate.run();
+            Arc.initialize();
         }
 
         @Override
