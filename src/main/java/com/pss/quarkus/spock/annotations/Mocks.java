@@ -41,16 +41,9 @@ import java.lang.annotation.Target;
  *    }
  * ```
  *
- *  WARNING: {@link Mocks#implmentation()} Is not working, this will probably take some more byte code manipulation
  */
-@Target({ElementType.METHOD})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Mocks {
 
-    /**
-     *
-     * If you are using an interface to mock, what is the implementation class,
-     *
-     */
-    Class implmentation() default void.class;
 }

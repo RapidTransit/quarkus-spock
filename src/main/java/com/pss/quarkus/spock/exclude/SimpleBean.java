@@ -10,7 +10,7 @@ public class SimpleBean {
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
     AnotherBean anotherBean;
 
-    public String get(){
+    public String get() {
         return "OK";
     }
 }

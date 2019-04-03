@@ -1,12 +1,13 @@
 package com.pss.quarkus.spock.annotations;
 
-import com.pss.quarkus.spock.QuarkusSpockExtension;
-import org.spockframework.runtime.extension.ExtensionAnnotation;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.spockframework.runtime.extension.ExtensionAnnotation;
+
+import com.pss.quarkus.spock.QuarkusSpockExtension;
 
 /**
  * = Use Quarkus's Dependency Injection for Spock Tests
@@ -15,7 +16,7 @@ import java.lang.annotation.Target;
  */
 @ExtensionAnnotation(QuarkusSpockExtension.class)
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target({ ElementType.TYPE })
 public @interface QuarkusSpec {
 
     boolean substrate() default false;

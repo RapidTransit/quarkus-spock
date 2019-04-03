@@ -1,13 +1,16 @@
 package com.pss.quarkus.spock.inject;
 
-import com.pss.quarkus.spock.state.SpecificationState;
-
-import javax.inject.Qualifier;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
+import javax.inject.Qualifier;
+
+import com.pss.quarkus.spock.state.SpecificationState;
 
 public class MockBeanSupplier {
 
@@ -25,6 +28,8 @@ public class MockBeanSupplier {
         this.clazz = type;
     }
 
+
+
     public Annotation[] getQualifiers() {
         return qualifiers;
     }
@@ -33,8 +38,8 @@ public class MockBeanSupplier {
         return method;
     }
 
-    public Object getBean(){
-        if(bean == null) {
+    public Object getBean() {
+        if (bean == null) {
             Objects.requireNonNull(SpecificationState.getSpecification(), "Specification State was not set");
             try {
                 bean = method.invoke(SpecificationState.getSpecification());
@@ -59,10 +64,10 @@ public class MockBeanSupplier {
                 '}';
     }
 
-    public static MockBeanSupplier from(Method method){
+    public static MockBeanSupplier from(Method method) {
         List<Annotation> qualifier = new ArrayList<>();
-        for(Annotation annotation : method.getAnnotations()){
-            if(annotation.annotationType().isAnnotationPresent(Qualifier.class)){
+        for (Annotation annotation : method.getAnnotations()) {
+            if (annotation.annotationType().isAnnotationPresent(Qualifier.class)) {
                 qualifier.add(annotation);
             }
         }
@@ -70,5 +75,4 @@ public class MockBeanSupplier {
         Class<?> type = method.getReturnType();
         return new MockBeanSupplier(method, qualifiers, type);
     }
-
 }

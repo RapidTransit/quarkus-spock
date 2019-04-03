@@ -2,17 +2,13 @@ package com.pss.quarkus.spock
 
 import com.pss.quarkus.spock.annotations.Mocks
 import com.pss.quarkus.spock.annotations.QuarkusSpec
-import com.pss.quarkus.spock.exclude.AnotherBean
-import com.pss.quarkus.spock.exclude.AnotherBeanImpl
-import com.pss.quarkus.spock.exclude.ProducedBean
-import com.pss.quarkus.spock.exclude.Qualifying
-import com.pss.quarkus.spock.exclude.SimpleBean
-
+import com.pss.quarkus.spock.exclude.*
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import static io.restassured.RestAssured.get
 import javax.inject.Inject
+
+import static io.restassured.RestAssured.get
 
 @Stepwise
 @QuarkusSpec
@@ -31,7 +27,7 @@ class QuarkusSpockSpec extends Specification {
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
     ProducedBean producedBean
 
-    def "Test Injection"(){
+    def "Test Injection"() {
         setup:
         bean.get() >> "MOCK"
         when:
@@ -41,15 +37,14 @@ class QuarkusSpockSpec extends Specification {
     }
 
 
-
-    def "Make Sure Mock Resets"(){
+    def "Make Sure Mock Resets"() {
         when:
         String result = bean.get()
         then:
         result == null
     }
 
-    def "Test Another Reset Injection"(){
+    def "Test Another Reset Injection"() {
         setup:
         bean.get() >> "SPOCK MOCK"
         when:
@@ -58,13 +53,13 @@ class QuarkusSpockSpec extends Specification {
         result == "SPOCK MOCK"
     }
 
-    def "Check qualifiers"(){
+    def "Check qualifiers"() {
         expect:
         anotherBeanWithQualifier != null
     }
 
 
-    def "Test Rest Service"(){
+    def "Test Rest Service"() {
         when: "We Call the Back End"
         def req = get("/endpoint")
 
@@ -73,19 +68,19 @@ class QuarkusSpockSpec extends Specification {
     }
 
     @Mocks
-    SimpleBean mock(){
+    SimpleBean mock() {
         return Mock(SimpleBean)
     }
 
     @Mocks
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
-    AnotherBeanImpl mockAnother(){
+    AnotherBeanImpl mockAnother() {
         return Mock(AnotherBeanImpl)
     }
 
     @Mocks
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
-    ProducedBean getOne(){
+    ProducedBean getOne() {
         return Mock(ProducedBean)
     }
 }

@@ -2,18 +2,17 @@ package com.pss.quarkus.spock.exclude;
 
 import javax.enterprise.inject.Produces;
 
-
 public class BeanFactory {
 
     @Produces
     @Qualifying(Qualifying.Qualify.QUALIFY)
-    public ProducedBean get1(){
+    public ProducedBean get1() {
         return new ProducedBean();
     }
 
     @Produces
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
-    public ProducedBean get2(){
+    public ProducedBean get2() {
         return new ProducedBean();
     }
 }

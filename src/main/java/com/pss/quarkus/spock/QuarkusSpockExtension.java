@@ -16,31 +16,33 @@
 
 package com.pss.quarkus.spock;
 
-import com.pss.quarkus.spock.annotations.Mocks;
-import com.pss.quarkus.spock.annotations.QuarkusSpec;
-import com.pss.quarkus.spock.inject.MockBeanSupplier;
-import com.pss.quarkus.spock.inject.InjectionOverride;
-import com.pss.quarkus.spock.repack.ArcTestResourceProvider;
-import com.pss.quarkus.spock.repack.bootstrap.ContextBootstrapper;
-import com.pss.quarkus.spock.state.SpecificationState;
-import com.pss.quarkus.spock.util.CommonUtils;
-import io.quarkus.test.common.NativeImageLauncher;
-import io.quarkus.test.common.RestAssuredURLManager;
-import io.quarkus.test.common.TestResourceManager;
-import io.quarkus.test.common.http.TestHTTPResourceManager;
-import org.intellij.lang.annotations.PrintFormat;
-import org.jboss.logging.Logger;
-import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
-import org.spockframework.runtime.model.SpecInfo;
-import spock.lang.Specification;
+import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forJvm;
+import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forNative;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forJvm;
-import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forNative;
+import org.intellij.lang.annotations.PrintFormat;
+import org.jboss.logging.Logger;
+import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
+import org.spockframework.runtime.model.SpecInfo;
+
+import com.pss.quarkus.spock.annotations.Mocks;
+import com.pss.quarkus.spock.annotations.QuarkusSpec;
+import com.pss.quarkus.spock.inject.InjectionOverride;
+import com.pss.quarkus.spock.inject.MockBeanSupplier;
+import com.pss.quarkus.spock.repack.ArcTestResourceProvider;
+import com.pss.quarkus.spock.repack.bootstrap.ContextBootstrapper;
+import com.pss.quarkus.spock.state.SpecificationState;
+import com.pss.quarkus.spock.util.CommonUtils;
+
+import io.quarkus.test.common.NativeImageLauncher;
+import io.quarkus.test.common.RestAssuredURLManager;
+import io.quarkus.test.common.TestResourceManager;
+import io.quarkus.test.common.http.TestHTTPResourceManager;
+import spock.lang.Specification;
 
 /**
  * Copy Pasta'd
@@ -49,7 +51,6 @@ import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationI
  * todo: Add a switch to leave written classes, sometimes we want to see what happened from the processor output
  */
 public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<QuarkusSpec> {
-
 
     private static final Logger LOGGER = Logger.getLogger(QuarkusSpockExtension.class.getName());
 
@@ -60,13 +61,11 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
     @Override
     public void visitSpecAnnotation(QuarkusSpec annotation, SpecInfo spec) {
 
-
-
         final Class<?> specClass = spec.getReflection();
         Class introspected = specClass;
-        while (introspected != null && !Specification.class.equals(introspected)){
-            for(Method m : introspected.getDeclaredMethods()){
-                if(m.isAnnotationPresent(Mocks.class)){
+        while (introspected != null && !Specification.class.equals(introspected)) {
+            for (Method m : introspected.getDeclaredMethods()) {
+                if (m.isAnnotationPresent(Mocks.class)) {
                     MockBeanSupplier supplier = MockBeanSupplier.from(m);
                     InjectionOverride.putBeanSupplier(supplier);
                 }
@@ -74,21 +73,14 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
             introspected = introspected.getSuperclass();
         }
-        final AbstractSpecificationInitializer initializer =
-                annotation.substrate() ? forNative(specClass) : forJvm(specClass);
-
-
-
-
+        final AbstractSpecificationInitializer initializer = annotation.substrate() ? forNative(specClass) : forJvm(specClass);
 
         // Log location
         String logLocation = Optional.of(annotation.logLocation())
-                .filter(log-> !"".equals(log))
+                .filter(log -> !"".equals(log))
                 .orElseGet(this::determineLogLocation);
 
         System.setProperty("quarkus.log.file.path", logLocation);
-
-
 
         spec.addSetupSpecInterceptor(invocation -> {
             SpecificationState.setSpecification(invocation.getInstance());
@@ -127,15 +119,14 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         });
     }
 
-
-    private String determineLogLocation(){
+    private String determineLogLocation() {
         Path path = Paths.get(System.getProperty("user.dir"));
         boolean target = path.resolve("target").toFile().exists();
         boolean build = path.resolve("build").toFile().exists();
-        if(target && build){
+        if (target && build) {
             LOGGER.warn("Both a build/ directory and a target/ directory were detected, logging to target/");
             return "target/quarkus.log";
-        } else if(build){
+        } else if (build) {
             LOGGER.infof(MESSAGE, "Gradle", "build/quarkus.log", QuarkusSpec.class.getName());
             return "build/quarkus.log";
         } else {
@@ -143,7 +134,6 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
             return "target/quarkus.log";
         }
     }
-
 
     static abstract class AbstractSpecificationInitializer<T> {
         final TestResourceManager resourceManager;
@@ -155,28 +145,28 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
             this.delegate = delegate;
         }
 
-        final void initializeResources(){
+        public static AbstractSpecificationInitializer forJvm(Class clazz) {
+            return new JvmSpecificationInitializer(new TestResourceManager(clazz), ContextBootstrapper.from(clazz));
+        }
+
+        public static AbstractSpecificationInitializer forNative(Class clazz) {
+            return new NativeSpecificationInitializer(new TestResourceManager(clazz), new NativeImageLauncher(clazz));
+        }
+
+        final void initializeResources() {
             resourceManager.start();
         }
 
-        final void shutdownResources(){
+        final void shutdownResources() {
             resourceManager.stop();
         }
 
         abstract void start();
 
         abstract void shutdown();
-
-        public static AbstractSpecificationInitializer forJvm(Class clazz){
-            return new JvmSpecificationInitializer(new TestResourceManager(clazz), ContextBootstrapper.from(clazz));
-        }
-
-        public static AbstractSpecificationInitializer forNative(Class clazz){
-            return new NativeSpecificationInitializer(new TestResourceManager(clazz), new NativeImageLauncher(clazz));
-        }
     }
 
-    private static class JvmSpecificationInitializer extends AbstractSpecificationInitializer<ContextBootstrapper>{
+    private static class JvmSpecificationInitializer extends AbstractSpecificationInitializer<ContextBootstrapper> {
 
         private JvmSpecificationInitializer(TestResourceManager resourceManager, ContextBootstrapper delegate) {
             super(resourceManager, delegate);
@@ -193,7 +183,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         }
     }
 
-    private static class NativeSpecificationInitializer extends AbstractSpecificationInitializer<NativeImageLauncher>{
+    private static class NativeSpecificationInitializer extends AbstractSpecificationInitializer<NativeImageLauncher> {
 
         private NativeSpecificationInitializer(TestResourceManager resourceManager, NativeImageLauncher delegate) {
             super(resourceManager, delegate);
@@ -213,10 +203,5 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
             delegate.close();
         }
     }
-
-
-
-
-
 
 }

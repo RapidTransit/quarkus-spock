@@ -7,17 +7,19 @@ import javax.ws.rs.Path;
 @Path("/endpoint")
 public class HttpEndpoint {
 
-    @Inject SimpleBean simpleBean;
+    @Inject
+    SimpleBean simpleBean;
 
     @Qualifying(Qualifying.Qualify.QUALIFY)
-    @Inject ProducedBean one;
+    @Inject
+    ProducedBean one;
 
     @Qualifying(Qualifying.Qualify.ANOTHER_QUALIFY)
-    @Inject ProducedBean two;
-
+    @Inject
+    ProducedBean two;
 
     @GET
-    public String get(){
+    public String get() {
         return "OK";
     }
 }

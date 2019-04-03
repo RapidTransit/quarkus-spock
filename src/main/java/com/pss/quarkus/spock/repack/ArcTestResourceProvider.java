@@ -1,30 +1,27 @@
 package com.pss.quarkus.spock.repack;
 
-import com.pss.quarkus.spock.util.CommonUtils;
-import io.quarkus.arc.Arc;
-import io.quarkus.arc.ClientProxy;
-import org.spockframework.mock.MockUtil;
-
-
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-import javax.inject.Qualifier;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
+import javax.inject.Qualifier;
+
+import com.pss.quarkus.spock.util.CommonUtils;
+
+import io.quarkus.arc.Arc;
+import io.quarkus.arc.ClientProxy;
+
 /**
  * I can't/do not know how to exclude {@link io.quarkus.arc.deployment.ArcTestResourceProvider} or guarantee the loading
  * order of the ServiceLoader
  */
-public class ArcTestResourceProvider  {
-
-
-
+public class ArcTestResourceProvider {
 
     public static void inject(Object test) {
         Class<?> c = test.getClass();
@@ -44,12 +41,12 @@ public class ArcTestResourceProvider  {
                     CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
                     Object instance = beanManager.getReference(bean, f.getType(), ctx);
                     Object unwrapped = null;
-                    if(instance instanceof ClientProxy){
+                    if (instance instanceof ClientProxy) {
                         unwrapped = ((ClientProxy) instance).getContextualInstance();
                     }
                     f.setAccessible(true);
                     try {
-                        if(CommonUtils.MOCK_UTIL.isMock(unwrapped)){
+                        if (CommonUtils.MOCK_UTIL.isMock(unwrapped)) {
                             f.set(test, unwrapped);
                         } else {
                             f.set(test, instance);
