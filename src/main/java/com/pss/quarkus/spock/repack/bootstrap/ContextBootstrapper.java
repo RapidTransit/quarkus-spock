@@ -1,19 +1,9 @@
-package com.pss.quarkus.spock;
+package com.pss.quarkus.spock.repack.bootstrap;
 
-import io.quarkus.deployment.ClassOutput;
-import io.quarkus.deployment.QuarkusClassWriter;
-import io.quarkus.deployment.util.IoUtil;
-import io.quarkus.runner.RuntimeRunner;
-import io.quarkus.runner.TransformerTarget;
-import io.quarkus.runtime.LaunchMode;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
+import static io.quarkus.test.common.PathTestHelper.getAppClassLocation;
+import static io.quarkus.test.common.PathTestHelper.getTestClassesLocation;
 
-import java.io.Closeable;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,10 +13,20 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiFunction;
 
-import static io.quarkus.test.common.PathTestHelper.getAppClassLocation;
-import static io.quarkus.test.common.PathTestHelper.getTestClassesLocation;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 
-class ContextBootstrapper {
+import com.pss.quarkus.spock.bytecode.InjectableTestBeanEnhancer;
+
+import io.quarkus.deployment.ClassOutput;
+import io.quarkus.deployment.QuarkusClassWriter;
+import io.quarkus.deployment.util.IoUtil;
+import io.quarkus.runner.RuntimeRunner;
+import io.quarkus.runner.TransformerTarget;
+import io.quarkus.runtime.LaunchMode;
+
+public class ContextBootstrapper {
 
     private final RuntimeRunner runner;
 
@@ -35,19 +35,6 @@ class ContextBootstrapper {
     private ContextBootstrapper(RuntimeRunner runner, Closeable shutdownTask) {
         this.runner = runner;
         this.shutdownTask = shutdownTask;
-    }
-
-    void run() {
-        runner.run();
-    }
-
-
-    void shutdown() {
-        try {
-            shutdownTask.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public static ContextBootstrapper from(Class<?> clazz) {
@@ -64,18 +51,21 @@ class ContextBootstrapper {
                 .setTarget(appClassLocation)
                 .setClassOutput(new ClassOutput() {
 
-
-
                     @Override
                     public void writeClass(boolean applicationClass, String className, byte[] data) throws IOException {
                         Path location = testClassLocation.resolve(className.replace('.', '/') + ".class");
                         Files.createDirectories(location.getParent());
                         try (FileOutputStream out = new FileOutputStream(location.toFile())) {
-                            // todo: Intercept: io/quarkus/arc/setup/Default_ComponentsProvider.class to inject mocks
-                            out.write(data);
+
+                            ClassReader classReader = new ClassReader(new ByteArrayInputStream(data));
+                            ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                            InjectableTestBeanEnhancer enhancer = new InjectableTestBeanEnhancer(writer);
+                            classReader.accept(enhancer, 0);
+                            out.write(writer.toByteArray());
+
                         }
                         // This is commented out because I need to inspect the output bytecode
-                       // shutdownTasks.add(new DeleteRunnable(location));
+                        // shutdownTasks.add(new DeleteRunnable(location));
                     }
 
                     @Override
@@ -162,7 +152,6 @@ class ContextBootstrapper {
                 })
                 .build();
 
-
         shutdownTask = new Closeable() {
             @Override
             public void close() throws IOException {
@@ -184,6 +173,18 @@ class ContextBootstrapper {
         }, "Quarkus Test Cleanup Shutdown task"));
 
         return new ContextBootstrapper(runtimeRunner, shutdownTask);
+    }
+
+    public void run() {
+        runner.run();
+    }
+
+    public void shutdown() {
+        try {
+            shutdownTask.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     static class DeleteRunnable implements Runnable {

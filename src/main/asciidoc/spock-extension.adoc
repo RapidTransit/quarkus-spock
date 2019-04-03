@@ -1,9 +1,9 @@
-# Spock Extension for Quarkus
-
-Anyone know Maven? Halp!
-
 Add this to your plugins in your Maven build
-```xml
+
+
+
+[source, xml]
+----
 <plugin>
     <groupId>org.codehaus.gmavenplus</groupId>
     <artifactId>gmavenplus-plugin</artifactId>
@@ -32,14 +32,46 @@ Add this to your plugins in your Maven build
         </dependency>
     </dependencies>
 </plugin>
-```
+----
 
 You will also need to add Byte Buddy
 
-```xml
+[source, xml]
+----
 <dependency>
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy</artifactId>
     <version>1.9.12</version>
 </dependency>
-```
+----
+
+[source, groovy]
+----
+@QuarkusSpec
+class MySpec extends Specification {
+
+   @Inject
+   MySimpleBeanService service
+
+   @Inject
+   SimpleBean1 simple1
+
+   def "Make Sure My Stuff Mocks"(){
+       setup:
+       simple1.get() >> "OK"
+       expect:
+       service.callSimple1sMethod() == "OK"
+   }
+
+
+
+   @Mocks
+   SimpleBean1 mock(){
+       return Mock(SimpleBean1)
+   }
+
+   @Mocks
+   SimpleBean2 mock(){
+       return Stub(SimpleBean2)
+   }
+----

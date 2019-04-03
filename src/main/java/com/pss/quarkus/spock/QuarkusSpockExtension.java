@@ -16,23 +16,33 @@
 
 package com.pss.quarkus.spock;
 
-import io.quarkus.test.common.NativeImageLauncher;
-import io.quarkus.test.common.RestAssuredURLManager;
-import io.quarkus.test.common.TestInjectionManager;
-import io.quarkus.test.common.TestResourceManager;
-import io.quarkus.test.common.http.TestHTTPResourceManager;
-import org.jboss.logging.Logger;
-import org.spockframework.mock.MockUtil;
-import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
-import org.spockframework.runtime.model.SpecInfo;
-import spock.lang.Specification;
+import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forJvm;
+import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forNative;
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forJvm;
-import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationInitializer.forNative;
+import org.intellij.lang.annotations.PrintFormat;
+import org.jboss.logging.Logger;
+import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
+import org.spockframework.runtime.model.SpecInfo;
+
+import com.pss.quarkus.spock.annotations.Mocks;
+import com.pss.quarkus.spock.annotations.QuarkusSpec;
+import com.pss.quarkus.spock.inject.InjectionOverride;
+import com.pss.quarkus.spock.inject.MockBeanSupplier;
+import com.pss.quarkus.spock.repack.ArcTestResourceProvider;
+import com.pss.quarkus.spock.repack.bootstrap.ContextBootstrapper;
+import com.pss.quarkus.spock.state.SpecificationState;
+import com.pss.quarkus.spock.util.CommonUtils;
+
+import io.quarkus.test.common.NativeImageLauncher;
+import io.quarkus.test.common.RestAssuredURLManager;
+import io.quarkus.test.common.TestResourceManager;
+import io.quarkus.test.common.http.TestHTTPResourceManager;
+import spock.lang.Specification;
 
 /**
  * Copy Pasta'd
@@ -42,31 +52,38 @@ import static com.pss.quarkus.spock.QuarkusSpockExtension.AbstractSpecificationI
  */
 public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<QuarkusSpec> {
 
-
     private static final Logger LOGGER = Logger.getLogger(QuarkusSpockExtension.class.getName());
 
+    @PrintFormat
+    private static final String MESSAGE = "Assuming Test is running from %s and logging to %s, if this is incorrect " +
+            "or if your compiled files are located in a different directory, please manually assign %s#logLocation()";
 
     @Override
     public void visitSpecAnnotation(QuarkusSpec annotation, SpecInfo spec) {
 
-        final MockUtil mockUtil = new MockUtil();
-
         final Class<?> specClass = spec.getReflection();
+        Class introspected = specClass;
+        while (introspected != null && !Specification.class.equals(introspected)) {
+            for (Method m : introspected.getDeclaredMethods()) {
+                if (m.isAnnotationPresent(Mocks.class)) {
+                    MockBeanSupplier supplier = MockBeanSupplier.from(m);
+                    InjectionOverride.putBeanSupplier(supplier);
+                }
+            }
 
-        final AbstractSpecificationInitializer initializer =
-                annotation.substrate() ? forNative(specClass) : forJvm(specClass);
-
+            introspected = introspected.getSuperclass();
+        }
+        final AbstractSpecificationInitializer initializer = annotation.substrate() ? forNative(specClass) : forJvm(specClass);
 
         // Log location
         String logLocation = Optional.of(annotation.logLocation())
-                .filter(log-> !"".equals(log))
-                .orElse(determineLogLocation());
+                .filter(log -> !"".equals(log))
+                .orElseGet(this::determineLogLocation);
 
         System.setProperty("quarkus.log.file.path", logLocation);
 
-
-
         spec.addSetupSpecInterceptor(invocation -> {
+            SpecificationState.setSpecification(invocation.getInstance());
             initializer.initializeResources();
             initializer.start();
             invocation.proceed();
@@ -74,33 +91,23 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
         // Inject Dependencies
         spec.addInitializerInterceptor(invocation -> {
+            SpecificationState.setSpecification(invocation.getInstance());
             TestHTTPResourceManager.inject(invocation.getInstance());
-            TestInjectionManager.inject(invocation.getInstance());
+            ArcTestResourceProvider.inject(invocation.getInstance());
             RestAssuredURLManager.setURL();
             invocation.proceed();
         });
 
         spec.addSetupInterceptor(invocation -> {
-            invocation.getSpec().getAllFields()
-                    .forEach(x-> {
-                        Object o = x.readValue(invocation.getInstance());
-                        if(mockUtil.isMock(o)){
-                            mockUtil.attachMock(o, (Specification) invocation.getInstance());
-                        }
-                    });
+            RestAssuredURLManager.setURL();
+            CommonUtils.attachMocks(invocation);
             invocation.proceed();
         });
 
         // Clear URL
         spec.addCleanupInterceptor(invocation -> {
             RestAssuredURLManager.clearURL();
-            invocation.getSpec().getAllFields()
-                    .forEach(x-> {
-                        Object o = x.readValue(invocation.getInstance());
-                        if(mockUtil.isMock(o)){
-                            mockUtil.detachMock(o);
-                        }
-                    });
+            CommonUtils.detachMocks(invocation);
             invocation.proceed();
         });
 
@@ -112,21 +119,21 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         });
     }
 
-
-    private String determineLogLocation(){
+    private String determineLogLocation() {
         Path path = Paths.get(System.getProperty("user.dir"));
         boolean target = path.resolve("target").toFile().exists();
         boolean build = path.resolve("build").toFile().exists();
-        if(target && build){
-            LOGGER.warn("Both a /build directory and a /target directory were detected, logging to /target");
+        if (target && build) {
+            LOGGER.warn("Both a build/ directory and a target/ directory were detected, logging to target/");
             return "target/quarkus.log";
-        } else if(build){
+        } else if (build) {
+            LOGGER.infof(MESSAGE, "Gradle", "build/quarkus.log", QuarkusSpec.class.getName());
             return "build/quarkus.log";
         } else {
+            LOGGER.infof(MESSAGE, "Maven", "target/quarkus.log", QuarkusSpec.class.getName());
             return "target/quarkus.log";
         }
     }
-
 
     static abstract class AbstractSpecificationInitializer<T> {
         final TestResourceManager resourceManager;
@@ -138,28 +145,28 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
             this.delegate = delegate;
         }
 
-        final void initializeResources(){
+        public static AbstractSpecificationInitializer forJvm(Class clazz) {
+            return new JvmSpecificationInitializer(new TestResourceManager(clazz), ContextBootstrapper.from(clazz));
+        }
+
+        public static AbstractSpecificationInitializer forNative(Class clazz) {
+            return new NativeSpecificationInitializer(new TestResourceManager(clazz), new NativeImageLauncher(clazz));
+        }
+
+        final void initializeResources() {
             resourceManager.start();
         }
 
-        final void shutdownResources(){
+        final void shutdownResources() {
             resourceManager.stop();
         }
 
         abstract void start();
 
         abstract void shutdown();
-
-        public static AbstractSpecificationInitializer forJvm(Class clazz){
-            return new JvmSpecificationInitializer(new TestResourceManager(clazz), ContextBootstrapper.from(clazz));
-        }
-
-        public static AbstractSpecificationInitializer forNative(Class clazz){
-            return new NativeSpecificationInitializer(new TestResourceManager(clazz), new NativeImageLauncher(clazz));
-        }
     }
 
-    private static class JvmSpecificationInitializer extends AbstractSpecificationInitializer<ContextBootstrapper>{
+    private static class JvmSpecificationInitializer extends AbstractSpecificationInitializer<ContextBootstrapper> {
 
         private JvmSpecificationInitializer(TestResourceManager resourceManager, ContextBootstrapper delegate) {
             super(resourceManager, delegate);
@@ -176,7 +183,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
         }
     }
 
-    private static class NativeSpecificationInitializer extends AbstractSpecificationInitializer<NativeImageLauncher>{
+    private static class NativeSpecificationInitializer extends AbstractSpecificationInitializer<NativeImageLauncher> {
 
         private NativeSpecificationInitializer(TestResourceManager resourceManager, NativeImageLauncher delegate) {
             super(resourceManager, delegate);
@@ -196,10 +203,5 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
             delegate.close();
         }
     }
-
-
-
-
-
 
 }
