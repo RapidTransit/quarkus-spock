@@ -2,7 +2,6 @@ package com.pss.quarkus.spock.state;
 
 import org.spockframework.runtime.model.SpecInfo;
 
-import io.quarkus.arc.ClientProxy;
 import io.quarkus.runner.RuntimeRunner;
 
 /**

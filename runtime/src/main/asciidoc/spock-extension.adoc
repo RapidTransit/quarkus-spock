@@ -1,7 +1,20 @@
-Add this to your plugins in your Maven build
+= Quarkus Spock Extension
+
+:toc:
 
 
+== Limitations
 
+* You can not mock an interface, you **must** mock the actual implementation. footnote:[We could change that but it is
+not guaranteed to work and we can't guarantee someone isn't going to try and inject by Implementation]
+
+
+== Requirements
+
+Some additional changes need to be made to your Maven `pom.xml`
+
+=== Groovy Compiler
+You need to add the groovy compiler
 [source, xml]
 ----
 <plugin>
@@ -34,7 +47,9 @@ Add this to your plugins in your Maven build
 </plugin>
 ----
 
-You will also need to add Byte Buddy
+=== ByteBuddy
+
+ByteBuddy is needed for mocking
 
 [source, xml]
 ----
@@ -45,9 +60,13 @@ You will also need to add Byte Buddy
 </dependency>
 ----
 
+== Sample
+
+Here is a sample ofa Spock Specification
+
 [source, groovy]
 ----
-@QuarkusSpec
+@QuarkusSpec <1>
 class MySpec extends Specification {
 
    @Inject
@@ -58,20 +77,23 @@ class MySpec extends Specification {
 
    def "Make Sure My Stuff Mocks"(){
        setup:
-       simple1.get() >> "OK"
+       simple1.get() >> "OK" <3>
        expect:
        service.callSimple1sMethod() == "OK"
    }
 
 
 
-   @Mocks
-   SimpleBean1 mock(){
-       return Mock(SimpleBean1)
+   @Mocks <2>
+   SimpleBean1Impl mock(){
+       return Mock(SimpleBean1Impl)
    }
 
-   @Mocks
-   SimpleBean2 mock(){
-       return Stub(SimpleBean2)
+   @Mocks <2>
+   SimpleBean2Impl mock(){
+       return Stub(SimpleBean2Impl)
    }
 ----
+<1> Annotate your Specification with `@QuarkusSpec`
+<2> Create a method that returns the actual implementation annotate with `@Mocks`
+<3> Mock like normal in your `setup:` block
