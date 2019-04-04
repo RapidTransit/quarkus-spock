@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 import io.quarkus.arc.Arc;
-import org.intellij.lang.annotations.PrintFormat;
+
 import org.jboss.logging.Logger;
 import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension;
 import org.spockframework.runtime.model.SpecInfo;
@@ -55,7 +55,7 @@ public class QuarkusSpockExtension extends AbstractAnnotationDrivenExtension<Qua
 
     private static final Logger LOGGER = Logger.getLogger(QuarkusSpockExtension.class.getName());
 
-    @PrintFormat
+
     private static final String MESSAGE = "Assuming Test is running from %s and logging to %s, if this is incorrect " +
             "or if your compiled files are located in a different directory, please manually assign %s#logLocation()";
 

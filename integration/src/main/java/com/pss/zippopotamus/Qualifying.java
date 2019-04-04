@@ -1,4 +1,4 @@
-package com.pss.quarkus.spock.exclude;
+package com.pss.zippopotamus;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,8 +1,8 @@
 # Spock Extension for Quarkus
 
-Anyone know Maven? Halp!
 
 Add this to your plugins in your Maven build
+
 ```xml
 <plugin>
     <groupId>org.codehaus.gmavenplus</groupId>

@@ -2,12 +2,18 @@
 
 :toc:
 
+== Framework/Language Links
+
+* http://quarkus.io[Quarkus]
+* http://spockframework.org/spock/docs/1.3/index.html[Spock]
+* http://http://groovy-lang.org/[Groovy]
+
 
 == Limitations
 
 * You can not mock an interface, you **must** mock the actual implementation. footnote:[We could change that but it is
 not guaranteed to work and we can't guarantee someone isn't going to try and inject by Implementation]
-
+* You should probably only mock application singletons
 
 == Requirements
 
@@ -62,7 +68,7 @@ ByteBuddy is needed for mocking
 
 == Sample
 
-Here is a sample ofa Spock Specification
+Here is a sample of a Spock Specification
 
 [source, groovy]
 ----
