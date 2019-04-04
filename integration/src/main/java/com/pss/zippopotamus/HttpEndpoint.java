@@ -1,4 +1,4 @@
-package com.pss.quarkus.spock.exclude;
+package com.pss.zippopotamus;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;

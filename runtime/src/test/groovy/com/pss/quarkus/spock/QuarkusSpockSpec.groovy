@@ -2,7 +2,7 @@ package com.pss.quarkus.spock
 
 import com.pss.quarkus.spock.annotations.Mocks
 import com.pss.quarkus.spock.annotations.QuarkusSpec
-import com.pss.quarkus.spock.exclude.*
+import com.pss.zippopotamus.*
 import spock.lang.Specification
 import spock.lang.Stepwise
 

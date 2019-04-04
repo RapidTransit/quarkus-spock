@@ -2,4 +2,4 @@
  * Not to swift with Maven so this is here for testing purposes only
  */
 
-package com.pss.quarkus.spock.exclude;
+package com.pss.zippopotamus;
