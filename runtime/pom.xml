@@ -3,18 +3,43 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>quarkus-spock</artifactId>
+        <artifactId>quarkus-spock-parent</artifactId>
         <groupId>com.pss</groupId>
-        <!--suppress MavenPropertyInParent -->
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+
     <version>${project.version}</version>
-    <artifactId>runtime</artifactId>
+    <artifactId>quarkus-spock</artifactId>
     <packaging>jar</packaging>
+
+    <name>Quarkus - Spock Extension</name>
+    <description>An extension for Quarkus that integrates Spock</description>
+    <url>https://rapidtransit.github.io/quarkus-spock/</url>
+
+
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com/RapidTransit/quarkus-spock/issues</url>
+    </issueManagement>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Jonathan Strauss</name>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
+
+
     <dependencies>
-
-
 
         <dependency>
             <groupId>org.spockframework</groupId>
