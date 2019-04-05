@@ -22,7 +22,11 @@
         <system>Github</system>
         <url>https://github.com/RapidTransit/quarkus-spock/issues</url>
     </issueManagement>
-
+    <scm>
+        <connection>scm:git:git://github.com/RapidTransit/quarkus-spock.git</connection>
+        <developerConnection>scm:git:ssh://github.com:RapidTransit/quarkus-spock.git</developerConnection>
+        <url>https://github.com/RapidTransit/quarkus-spock/tree/master</url>
+    </scm>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -140,7 +144,7 @@
             <dependencies>
                 <dependency>
                     <groupId>com.pss</groupId>
-                    <artifactId>integration</artifactId>
+                    <artifactId>quarkus-spock-integration</artifactId>
                     <version>${project.version}</version>
                     <scope>test</scope>
                 </dependency>

@@ -14,6 +14,10 @@ import static io.restassured.RestAssured.get
 @QuarkusSpec
 class QuarkusSpockSpec extends Specification {
 
+    static {
+        System.setProperty("quarkus-spock.delete-enhancements", "true")
+    }
+
     @Inject
     SimpleBean bean
 

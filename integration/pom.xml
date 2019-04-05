@@ -12,7 +12,34 @@
     <artifactId>quarkus-spock-integration</artifactId>
     <version>${project.version}</version>
     <packaging>jar</packaging>
+    <name>Quarkus - Spock Extension Integration</name>
+    <description>For Internal Testing</description>
+    <url>https://rapidtransit.github.io/quarkus-spock/</url>
 
+
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com/RapidTransit/quarkus-spock/issues</url>
+    </issueManagement>
+    <scm>
+        <connection>scm:git:git://github.com/RapidTransit/quarkus-spock.git</connection>
+        <developerConnection>scm:git:ssh://github.com:RapidTransit/quarkus-spock.git</developerConnection>
+        <url>https://github.com/RapidTransit/quarkus-spock/tree/master</url>
+    </scm>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Jonathan Strauss</name>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
 
     <profiles>
         <profile>
