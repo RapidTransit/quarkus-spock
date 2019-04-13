@@ -31,8 +31,6 @@ public class ZippopotanusEndpoint {
                 .orElseGet(()-> {
                             ZippopotamusResult cities = client.getCities(code);
                             return service.persist(cities);
-                        }
-
-                        );
+                        });
     }
 }

@@ -1,5 +1,5 @@
 /**
- * include::src/main/asciidoc/spock-extension.adoc[]
+ * include::src/main/asciidoc/index.asciidoc[]
  */
 
 package com.pss.quarkus.spock;

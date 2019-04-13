@@ -64,8 +64,9 @@ public class ContextBootstrapper {
                             out.write(writer.toByteArray());
 
                         }
-                        // This is commented out because I need to inspect the output bytecode
-                        // shutdownTasks.add(new DeleteRunnable(location));
+                        if(!"true".equals(System.getProperty("quarkus-spock.delete-enhancements", "false"))) {
+                            shutdownTasks.add(new DeleteRunnable(location));
+                        }
                     }
 
                     @Override

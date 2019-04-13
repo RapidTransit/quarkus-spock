@@ -16,6 +16,8 @@ import com.pss.quarkus.spock.util.CommonUtils;
 
 import io.quarkus.arc.InjectableBean;
 
+import static org.objectweb.asm.Type.*;
+
 /**
  * = Injectable Test Bean Enhancer
  *
@@ -34,13 +36,23 @@ import io.quarkus.arc.InjectableBean;
  */
 public class InjectableTestBeanEnhancer extends ClassVisitor {
 
+
+    static class Types {
+        private static final Type CREATIONAL_CONTEXT = Type.getType(CreationalContext.class);
+        private static final Type OBJECT = Type.getType(Object.class);
+    }
+
+
+
     public static final Method INJECTABLE_BEANS;
     public static final Method GET_INJECTION;
-    private static final int BRIDGE = Opcodes.ACC_PUBLIC | Opcodes.ACC_BRIDGE;
-    private static final String INJ_BEAN = Type.getInternalName(InjectableBean.class);
-    private static final String INJ_TEST_BEAN = Type.getInternalName(InjectableTestBean.class);
-    private static final String INJ_OVERRIDE_NAME = Type.getInternalName(InjectionOverride.class);
+    private static final int BRIDGE_CODE = Opcodes.ACC_PUBLIC | Opcodes.ACC_BRIDGE;
+    private static final String INJ_BEAN = getInternalName(InjectableBean.class);
+    private static final String INJ_TEST_BEAN = getInternalName(InjectableTestBean.class);
+    private static final String INJ_OVERRIDE_NAME = getInternalName(InjectionOverride.class);
     private static final Method CREATE;
+
+
 
     private static final Method CREATE_BEAN;
     static {
@@ -105,7 +117,7 @@ public class InjectableTestBeanEnhancer extends ClassVisitor {
                 this.signature = signature;
                 this.exceptions = exceptions;
                 return super.visitMethod(Opcodes.ACC_PUBLIC, "createBean", descriptor, signature, exceptions);
-            } else if (access == (Opcodes.ACC_PUBLIC | Opcodes.ACC_BRIDGE) && "create".equals(name)) {
+            } else if (access == BRIDGE_CODE && "create".equals(name)) {
                 return new RewriteCallVisitor(super.visitMethod(access, "createBean", descriptor, signature, exceptions));
             }
         }
@@ -121,27 +133,35 @@ public class InjectableTestBeanEnhancer extends ClassVisitor {
             mv.visitCode();
             mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitVarInsn(Opcodes.ALOAD, 1);
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-                    CommonUtils.toJvm(InjectionOverride.class),
-                    GET_INJECTION.getName(),
-                    Type.getMethodDescriptor(GET_INJECTION),
-                    false);
+            mv.visitMethodInsn(
+                    Opcodes.INVOKESTATIC,                         // <Opcode>
+                    getInternalName(InjectionOverride.class),     // <Class>
+                    GET_INJECTION.getName(),                      // <<Method Name>>
+                    getMethodDescriptor(GET_INJECTION),           // <<Params & Return Type>>
+                    false);                                       // <<Is Interface>>
 
-            mv.visitTypeInsn(Opcodes.CHECKCAST, Type.getReturnType(descriptor).getInternalName());
+            mv.visitTypeInsn(Opcodes.CHECKCAST, getReturnType(descriptor).getInternalName());
             mv.visitInsn(Opcodes.ARETURN);
             mv.visitMaxs(2, 2);
             mv.visitEnd();
-            String bridgeDescriptor = Type.getMethodDescriptor(Type.getType(Object.class),
-                    Type.getType(CreationalContext.class));
+            String bridgeDescriptor = getMethodDescriptor(Types.OBJECT, Types.CREATIONAL_CONTEXT);
 
             // Add a Bridge Method
-            MethodVisitor br = super.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_BRIDGE, "create",
+            MethodVisitor br = super.visitMethod(BRIDGE_CODE, "create",
                     bridgeDescriptor, signature, exceptions);
             br.visitCode();
             br.visitVarInsn(Opcodes.ALOAD, 0);
             br.visitVarInsn(Opcodes.ALOAD, 1);
-            br.visitMethodInsn(Opcodes.INVOKEVIRTUAL, internalClassName, "create",
-                    Type.getMethodDescriptor(Type.getReturnType(descriptor), Type.getType(CreationalContext.class)), false);
+
+            br.visitMethodInsn(
+                    Opcodes.INVOKEVIRTUAL,  // <Opcode>
+                    internalClassName,      // <Class>
+                    "create",               // <<Method Name>>
+                    getMethodDescriptor(    // <<Params & Return Type>>
+                            getReturnType(descriptor), // <<Return Type>>
+                            Types.CREATIONAL_CONTEXT), // <<Parameter Type>>
+                    false);                 // <<Is Interface>>
+
             br.visitInsn(Opcodes.ARETURN);
             br.visitMaxs(2, 2);
             br.visitEnd();
@@ -171,14 +191,21 @@ public class InjectableTestBeanEnhancer extends ClassVisitor {
             super(Opcodes.ASM6, methodVisitor);
         }
 
+
+        /**
+         *
+         * @param opcode {@link org.objectweb.asm.Opcodes}
+         */
         @Override
         public void visitInsn(int opcode) {
             if (opcode == Opcodes.RETURN) {
                 super.visitVarInsn(Opcodes.ALOAD, 0);
-                super.visitMethodInsn(Opcodes.INVOKESTATIC,
-                        Type.getInternalName(InjectionOverride.class),
+
+                super.visitMethodInsn(
+                        Opcodes.INVOKESTATIC,
+                        getInternalName(InjectionOverride.class),
                         INJECTABLE_BEANS.getName(),
-                        Type.getMethodDescriptor(INJECTABLE_BEANS),
+                        getMethodDescriptor(INJECTABLE_BEANS),
                         false);
             }
             super.visitInsn(opcode);
